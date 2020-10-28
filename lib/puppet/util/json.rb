@@ -26,6 +26,14 @@ module Puppet::Util
       require 'json'
     end
 
+    def self.load_file(filename, options = {})
+      json = Puppet::FileSystem.read(filename, :encoding => 'bom|utf-8')
+      data = load(json, options)
+      data = false if data.nil?
+      data
+    end
+
+
     # These methods do similar processing to the fallback implemented by MultiJson
     # when using the built-in JSON backend, to ensure consistent behavior
     # whether or not MultiJson can be loaded.
@@ -63,6 +71,12 @@ module Puppet::Util
       else
         options.merge!(::JSON::PRETTY_STATE_PROTOTYPE.to_h) if options.delete(:pretty)
         object.to_json(options)
+      end
+    end
+
+    def self.dump_file(object, filename)
+      Puppet::FileSystem.replace_file(filename, 0660) do |fh|
+        fh.write object.to_json
       end
     end
   end

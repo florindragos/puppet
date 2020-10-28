@@ -54,9 +54,13 @@ class Puppet::Util::Storage
     end
     Puppet::Util.benchmark(:debug, "Loaded state in %{seconds} seconds") do
       begin
-        @@state = Puppet::Util::Yaml.safe_load_file(filename, [Symbol, Time])
-      rescue Puppet::Util::Yaml::YamlLoadError => detail
+        @@state = Puppet::Util::Json.load_file(filename, {:symbolize_keys => true})
+      rescue Puppet::Util::Json::ParseError => detail
         Puppet.err _("Checksumfile %{filename} is corrupt (%{detail}); replacing") % { filename: filename, detail: detail }
+        @@state = false
+
+        # require 'pry-byebug'
+        # binding.pry
 
         begin
           File.rename(filename, filename + ".bad")
@@ -94,7 +98,7 @@ class Puppet::Util::Storage
     end
 
     Puppet::Util.benchmark(:debug, "Stored state in %{seconds} seconds") do
-      Puppet::Util::Yaml.dump(@@state, Puppet[:statefile])
+      Puppet::Util::Json.dump_file(@@state, Puppet[:statefile])
     end
   end
 end

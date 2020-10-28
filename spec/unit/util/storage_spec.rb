@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-require 'yaml'
+require 'json'
 require 'fileutils'
 require 'puppet/util/storage'
 
@@ -108,7 +108,7 @@ describe Puppet::Util::Storage do
       end
 
       it "should overwrite its internal state if load() is called" do
-        # Should the state be overwritten even if Puppet[:statefile] is not valid YAML?
+        # Should the state be overwritten even if Puppet[:statefile] is not valid JSON?
         Puppet::Util::Storage.cache(:yayness)
         expect(Puppet::Util::Storage.state).to eq({:yayness=>{}})
 
@@ -117,16 +117,16 @@ describe Puppet::Util::Storage do
         expect(Puppet::Util::Storage.state).to eq({})
       end
 
-      it "should restore its internal state if the state file contains valid YAML" do
-        test_yaml = {'File["/yayness"]'=>{"name"=>{:a=>:b,:c=>:d}}}
-        write_state_file(test_yaml.to_yaml)
+      it "should restore its internal state if the state file contains valid JSON" do
+        test_hash = {'File["/yayness"]'=>{"name"=>{:a=>:b,:c=>:d}}}
+        write_state_file(test_hash.to_json)
 
         Puppet::Util::Storage.load
 
-        expect(Puppet::Util::Storage.state).to eq(test_yaml)
+        expect(Puppet::Util::Storage.state).to eq(test_hash)
       end
 
-      it "should initialize with a clear internal state if the state file does not contain valid YAML" do
+      it "should initialize with a clear internal state if the state file does not contain valid JSON" do
         write_state_file('{ invalid')
 
         Puppet::Util::Storage.load
@@ -142,7 +142,7 @@ describe Puppet::Util::Storage do
         expect(Puppet::Util::Storage.state).to eq({})
       end
 
-      it "should raise an error if the state file does not contain valid YAML and cannot be renamed" do
+      it "should raise an error if the state file does not contain valid JSON and cannot be renamed" do
         write_state_file('{ invalid')
 
         expect(File).to receive(:rename).and_raise(SystemCallError)
@@ -170,7 +170,7 @@ describe Puppet::Util::Storage do
           'File[/etc/puppetlabs/puppet]' =>
           { :checked => Time.new('2018-08-08 15:28:25.546999000 -07:00') }
         }
-        write_state_file(YAML.dump(state))
+        write_state_file(JSON.dump(state))
 
         Puppet::Util::Storage.load
 
